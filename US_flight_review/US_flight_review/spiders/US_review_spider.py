@@ -1,19 +1,68 @@
 import scrapy
 from US_flight_review.items import UsFlightReviewItem
 import re
+from urllib.parse import urlencode
 
 
 class UsSpider(scrapy.Spider):
-    name = "US_spider"
-    allowed_domains = ["www.airlinequality.com"]
-    start_urls = ['https://www.airlinequality.com/airline-reviews/singapore-airlines/page/' + str(i) for i in range(40)]
     
+    # Spider Meta Data
+    name = "US_review_spider"
+    allowed_domains = ["www.airlinequality.com"]
+    custom_settings = {
+        'ITEM_PIPELINES': {'US_flight_review.pipelines.UsFlightReviewPipeline': 300},
+    }
+    
+    # Variable Storages
+    def __init__(self, **kwargs):
+        super(UsSpider, self).__init__(**kwargs)  # python3 way of taking kwargs
+        self.company_index = kwargs['company_index']
+        self.company_to_crawl = ['Alaska Airlines',
+                            'Allegiant Air',
+                            'American Airlines',
+                            'Avelo Airlines',
+                            'Breeze Airways',
+                            'Delta Air Lines',
+                            'Eastern Airlines',
+                            'Frontier Airlines',
+                            'Hawaiian Airlines',
+                            'JetBlue Airways',
+                            'Southwest Airlines',
+                            'Spirit Airlines',
+                            'Sun Country Airlines',
+                            'United Airlines']
+        
+        self.features = ['AirName',
+                            'OverallScore',
+                            'ReviewTitle',
+                            'ReviewrCountry',
+                            'ReviewDate',
+                            'AircraftModel',
+                            'TravelType',
+                            'SeatType',
+                            'Route',
+                            'DateFlown',
+                            'SeatComfortRating',
+                            'ServiceRating',
+                            'FoodRating',
+                            'EntertainmentRating',
+                            'GroundServiceRating',
+                            'WifiRating',
+                            'ValueRating',
+                            'Recommended',
+                            'Comments']
+    
+    def start_requests(self):
+        target_url = 'https://www.airlinequality.com/airline-reviews/{}/page/{}?sortby=post_date%3ADesc&pagesize=3'
+        for i in self.company_to_crawl[:1]:
+            for j in range(1,5-3):
+                yield scrapy.Request(url=self.get_proxy_url(target_url.format('-'.join(i.split()).lower(), j)), callback=self.parse, meta={'company':i, 'page':j})
 
     def parse(self, response):
         reviews = response.xpath('//article[@itemprop="review"]')
         for review in reviews:
+            
             #OverallScore
-
             try:
                 OverallScore = review.xpath('./div/span[1]/text()').extract_first()
             except:
@@ -133,8 +182,8 @@ class UsSpider(scrapy.Spider):
                 Comments = ''
 
 
-            item = Top10AirItem()
-            item['AirName'] = 'Singapore Airlines'
+            item = UsFlightReviewItem()
+            item['AirName'] = response.meta.get('company')
             item['OverallScore'] = OverallScore
             item['ReviewTitle'] = ReviewTitle
             item['ReviewrCountry'] = ReviewrCountry
@@ -156,3 +205,11 @@ class UsSpider(scrapy.Spider):
 
             yield item
         pass
+    
+    # Helper function: proxy rotation
+    def get_proxy_url(self, url):
+        API_KEY = 'a8f16a6c-2482-4bdb-812a-eed1964a6796'
+        
+        payload = {'api_key': API_KEY, 'url': url}
+        proxy_url = 'https://proxy.scrapeops.io/v1/?' + urlencode(payload)
+        return proxy_url

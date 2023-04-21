@@ -1,0 +1,4 @@
+,AirName,OverallScore,ReviewTitle,ReviewrCountry,ReviewDate,AircraftModel,TravelType,SeatType,Route,DateFlown,SeatComfortRating,ServiceRating,FoodRating,EntertainmentRating,GroundServiceRating,WifiRating,ValueRating,Recommended,Comments
+0,Alaska Airlines,1,"""never fly these people again""", (United States) ,19th April 2023,,Business,First Class,Orlando to San Diego,April 2023,1,1,0,0,1,0,1,,
+1,Alaska Airlines,1,"""Worst service in the industry""", (United States) ,16th April 2023,,Solo Leisure,Economy Class,New York to San Francisco,April 2023,1,1,0,0,1,0,1,,
+2,Alaska Airlines,1,"""very disappointed on Alaska Airlines""", (United States) ,5th April 2023,,Family Leisure,Economy Class,Seattle to San Antonio,February 2023,4,4,4,4,1,4,1,,
