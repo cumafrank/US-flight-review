@@ -2,6 +2,7 @@ import scrapy
 from US_flight_review.items import UsFlightReviewItem
 from US_flight_review.support import s3_snapshot
 import re
+from datetime import datetime
 from urllib.parse import urlencode
 
 
@@ -38,8 +39,8 @@ class UsSpider(scrapy.Spider):
                             'Recommended',
                             'Comments']
         latest_df = s3_snapshot(self)
-        self.latest_date = max(latest_df['ReviewDate'])
-        print(self.__dict__)
+        self.activation = True if latest_df else False
+        self.latest_date = max(latest_df['ReviewDate']) if latest_df else datetime.strptime('1800-01-01', '%Y-%m-%d')
     
     def start_requests(self):
         target_url = 'https://www.airlinequality.com/airline-reviews/{}/page/{}?sortby=post_date%3ADesc&pagesize=3'

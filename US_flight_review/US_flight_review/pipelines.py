@@ -32,11 +32,14 @@ class UsFlightReviewPipeline:
         self.df.to_csv('US_flight_review_list.csv')
         
     def process_item(self, item, spider):
-        item_date = datetime.datetime.strptime(item['ReviewDate'], '%d %B %Y')
-        if item_date < spider.latest_date:
-            spider.crawler.engine.close_spider(spider, 'Spider Ceased: Reach latest data updated')
-        else:
-            self.df_list.append(list(item.values()))        
+        
+        # Decide whether it's activation job type and happen before latest updated data
+        if not spider.activation:
+            item_date = datetime.datetime.strptime(item['ReviewDate'], '%d %B %Y')
+            if item_date < spider.latest_date:
+                spider.crawler.engine.close_spider(spider, 'Spider Ceased: Reach latest data updated')
+        
+        self.df_list.append(list(item.values()))        
         
         return item
     

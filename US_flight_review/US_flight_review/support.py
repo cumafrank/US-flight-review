@@ -70,7 +70,7 @@ def s3_snapshot(spider):
         # I/O: Read/Filter the datasheet
         for file in review_bucket.objects.all():
             file_name=file.key
-            if file_name.find(".csv")!=-1 and file_name.find('_'.join(spider.company_to_crawl.split())):
+            if file_name.find(".csv")!=-1 and file_name.find('_'.join(spider.company_to_crawl.split()))!=-1:
                 file_lst.append(file.key)
         
         # Formatting: 
@@ -81,11 +81,11 @@ def s3_snapshot(spider):
         df = pd.concat(df, axis=0)
         df['ReviewDate'] = df['ReviewDate'].apply(remove_ordinal_suffix)
         df['ReviewDate'] = pd.to_datetime(df['ReviewDate'])
-        return df
+        return df if df != [] else None
     
     except ClientError as e:
         logging.error(e)
-        return False
+        return None
 
     
     
