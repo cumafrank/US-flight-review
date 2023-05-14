@@ -1,5 +1,6 @@
 import scrapy
 from US_flight_review.items import UsFlightReviewItem
+from US_flight_review.support import s3_snapshot
 import re
 from urllib.parse import urlencode
 
@@ -16,22 +17,7 @@ class UsSpider(scrapy.Spider):
     # Variable Storages
     def __init__(self, **kwargs):
         super(UsSpider, self).__init__(**kwargs)  # python3 way of taking kwargs
-        self.company_index = kwargs['company_index']
-        self.company_to_crawl = ['Alaska Airlines',
-                            'Allegiant Air',
-                            'American Airlines',
-                            'Avelo Airlines',
-                            'Breeze Airways',
-                            'Delta Air Lines',
-                            'Eastern Airlines',
-                            'Frontier Airlines',
-                            'Hawaiian Airlines',
-                            'JetBlue Airways',
-                            'Southwest Airlines',
-                            'Spirit Airlines',
-                            'Sun Country Airlines',
-                            'United Airlines']
-        
+        self.company_to_crawl = kwargs.get('company_to_crawl',None)
         self.features = ['AirName',
                             'OverallScore',
                             'ReviewTitle',
@@ -51,12 +37,14 @@ class UsSpider(scrapy.Spider):
                             'ValueRating',
                             'Recommended',
                             'Comments']
+        latest_df = s3_snapshot(self)
+        self.latest_date = max(latest_df['ReviewDate'])
+        print(self.__dict__)
     
     def start_requests(self):
         target_url = 'https://www.airlinequality.com/airline-reviews/{}/page/{}?sortby=post_date%3ADesc&pagesize=3'
-        for i in self.company_to_crawl[:1]:
-            for j in range(1,5-3):
-                yield scrapy.Request(url=self.get_proxy_url(target_url.format('-'.join(i.split()).lower(), j)), callback=self.parse, meta={'company':i, 'page':j})
+        for j in range(1,5-3):
+            yield scrapy.Request(url=self.get_proxy_url(target_url.format('-'.join(self.company_to_crawl.split()).lower(), j)), callback=self.parse, meta={'company':self.company_to_crawl, 'page':j})
 
     def parse(self, response):
         reviews = response.xpath('//article[@itemprop="review"]')
@@ -86,6 +74,7 @@ class UsSpider(scrapy.Spider):
             #ReviewDate
             try:
                 ReviewDate = review.xpath('././div/h3/time/text()').extract_first()
+                ReviewDate = re.sub(r'\b\d+(st|nd|rd|th)\b', lambda m: m.group().rstrip('stndrdth'), ReviewDate)
             except:
                 ReviewDate = ''
 
